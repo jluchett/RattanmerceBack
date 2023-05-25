@@ -1,0 +1,15 @@
+{
+  "extends": ["eslint:recommended", "plugin:prettier/recommended"],
+  "rules": {
+    // Aquí puedes agregar reglas personalizadas de ESLint
+    "prettier/prettier": "error",
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "func-names": "off",
+    "no-plusplus": "off",
+    "no-process-exit": "off",
+    "The keyword 'const' is reserved": "false",
+    "class-methods-use-this": "off",
+    "node/no-unsupported-features/es-syntax": "off"
+  }
+}

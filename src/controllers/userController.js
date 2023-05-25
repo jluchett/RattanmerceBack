@@ -30,6 +30,29 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   // Lógica para iniciar sesión de un usuario
+  try {
+    const { username, password } = req.body;
+
+    // Verificar si el usuario existe
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
+    }
+
+    // Verificar la contraseña
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Credenciales no coinciden' });
+    }
+
+    // Generar token JWT
+    const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET);
+
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    res.status(500).json({ message: 'Error al iniciar sesión' });
+  }
 };
 
 module.exports = {

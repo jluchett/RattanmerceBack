@@ -7,6 +7,8 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/forgotPass', userController.forgotPassword);
 router.post('/resetPass/:token', userController.resetPassword);
+router.get('/', userController.getUsers);
+router.delete('/user/:id', userController.deleteUser);
 
 // Rutas protegidas
 router.get('/user', authenticateToken, (req, res) => {

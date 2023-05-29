@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const register = async (req, res) => {
   // Lógica para registrar un usuario
@@ -19,6 +20,8 @@ const register = async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
+      resetToken: 'hash',
+      resetTokenExpiration: Date.now(),
     });
     await newUser.save();
 
@@ -75,32 +78,36 @@ const forgotPassword = async (req, res) => {
     // Envía un correo electrónico al usuario con un enlace para restablecer la contraseña
     // Configura el transporte de correo
     const transporter = nodemailer.createTransport({
-      service: 'Gmail',
+      host: 'smtp.live.com',
+      port: 587,
+      secure: false,
       auth: {
-        user: 'slucheta854@gmail.com',
-        pass: 'LrSj@2014',
+        user: 'jluchett@hotmail.com',
+        pass: 'HijoTeAmo@20140324',
       },
     });
     // Aquí puedes utilizar una librería para enviar correos electrónicos, como Nodemailer
-    const resetUrl = "http://localhost:3000/users/resetPass"
+    const resetUrl = `'http://localhost:3000/users/resetPass/${resetToken}'`;
     const mailOptions = {
-      from: 'slucheta854@gmail.com',
+      from: 'jluchett@hotmail.com',
       to: user.email,
       subject: 'Restablecimiento de contraseña',
-      text: `Hola ${user.email.split("@")[0]},\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
+      text: `Hola ${
+        user.email.split('@')[0]
+      },\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
     };
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error al enviar el correo electrónico:', error);
-        return res.status(500).json({ message: 'Error al enviar el correo electrónico' });
+        return res
+          .status(500)
+          .json({ message: 'Error al enviar el correo electrónico' });
       }
       console.log('Correo electrónico enviado:', info.response);
-      res.json({ message: 'Se ha enviado un enlace al correo electrónico para restablecer la contraseña' });
-    });
-
-    res.json({
-      message:
-        'Se ha enviado un enlace al correo electrónico para restablecer la contraseña',
+      res.json({
+        message:
+          'Se ha enviado un enlace al correo electrónico para restablecer la contraseña',
+      });
     });
   } catch (error) {
     console.error(
@@ -125,18 +132,16 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({
-          message:
-            'El enlace para restablecer la contraseña es inválido o ha expirado',
-        });
+      return res.status(400).json({
+        message:
+          'El enlace para restablecer la contraseña es inválido o ha expirado',
+      });
     }
 
     // Actualiza la contraseña del usuario
     user.password = newPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiration = undefined;
+    user.resetToken = '';
+    user.resetTokenExpiration = null;
     await user.save();
 
     res.json({ message: 'Contraseña restablecida correctamente' });
@@ -146,9 +151,34 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    // Obtén el ID del usuario a eliminar desde los parámetros de la solicitud
+    const { id } = req.params;
+    // Elimina el usuario de la base de datos
+    await User.findByIdAndRemove(id);
+    res.json({ message: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar el usuario:', error);
+    res.status(500).json({ message: 'Error al eliminar el usuario' });
+  }
+};
+
+const getUsers = async (req, res) => {
+  try {
+    const allUsers = await User.find();
+    res.json(allUsers);
+  } catch (error) {
+    console.error('Error al obtener los usuarios:', error);
+    res.status(500).json({ message: 'Error al obtener los usuarios:' });
+  }
+};
+
 module.exports = {
   register,
   login,
   forgotPassword,
   resetPassword,
+  deleteUser,
+  getUsers,
 };

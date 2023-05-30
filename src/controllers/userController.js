@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const register = async (req, res) => {
   // Lógica para registrar un usuario
   try {
-    const { email, password } = req.body;
+    const { email, password, question, answer } = req.body;
 
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
@@ -17,11 +17,12 @@ const register = async (req, res) => {
 
     // Crear un nuevo usuario
     const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedAnswer = await bcrypt.hash(answer,5);
     const newUser = new User({
       email,
       password: hashedPassword,
-      resetToken: 'hash',
-      resetTokenExpiration: Date.now(),
+      secureQuestion: question,
+      secureAnswer: hashedAnswer,
     });
     await newUser.save();
 
@@ -75,40 +76,35 @@ const forgotPassword = async (req, res) => {
     user.resetTokenExpiration = Date.now() + 3600000; // Expira en 1 hora
     await user.save();
 
-    // Envía un correo electrónico al usuario con un enlace para restablecer la contraseña
-    // Configura el transporte de correo
     const transporter = nodemailer.createTransport({
-      host: 'smtp.live.com',
+      host: 'smtp.office365.com',
       port: 587,
       secure: false,
       auth: {
-        user: 'jluchett@hotmail.com',
-        pass: 'HijoTeAmo@20140324',
+        user: process.env.REMITE,
+        pass: process.env.CONTRA,
       },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
-    // Aquí puedes utilizar una librería para enviar correos electrónicos, como Nodemailer
-    const resetUrl = `'http://localhost:3000/users/resetPass/${resetToken}'`;
+    const resetUrl = "http://localhost:3001/users/forgotPass"
     const mailOptions = {
-      from: 'jluchett@hotmail.com',
+      from: process.env.REMITE,
       to: user.email,
       subject: 'Restablecimiento de contraseña',
-      text: `Hola ${
-        user.email.split('@')[0]
-      },\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
+      text: `Hola ${user.email.split('@')[0]},\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
     };
+    
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error al enviar el correo electrónico:', error);
-        return res
-          .status(500)
-          .json({ message: 'Error al enviar el correo electrónico' });
+      } else {
+        console.log('Correo electrónico enviado:', info.response);
+        res.json({ message: 'Se ha enviado un enlace al correo electrónico para restablecer la contraseña' });
       }
-      console.log('Correo electrónico enviado:', info.response);
-      res.json({
-        message:
-          'Se ha enviado un enlace al correo electrónico para restablecer la contraseña',
-      });
     });
+
   } catch (error) {
     console.error(
       'Error al solicitar el restablecimiento de contraseña:',
@@ -132,15 +128,12 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        message:
-          'El enlace para restablecer la contraseña es inválido o ha expirado',
-      });
+      return res.status(400).json({ message: 'El enlace para restablecer la contraseña es inválido o ha expirado' });
     }
 
     // Actualiza la contraseña del usuario
     user.password = newPassword;
-    user.resetToken = '';
+    user.resetToken = "hash";
     user.resetTokenExpiration = null;
     await user.save();
 

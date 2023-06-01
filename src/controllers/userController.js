@@ -3,11 +3,12 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { now } = require('mongoose');
 
 const register = async (req, res) => {
   // Lógica para registrar un usuario
   try {
-    const { email, password, question, answer } = req.body;
+    const { email, password } = req.body;
 
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
@@ -17,12 +18,15 @@ const register = async (req, res) => {
 
     // Crear un nuevo usuario
     const hashedPassword = await bcrypt.hash(password, 10);
-    const hashedAnswer = await bcrypt.hash(answer, 5);
     const newUser = new User({
       email,
       password: hashedPassword,
-      secureQuestion: question,
-      secureAnswer: hashedAnswer,
+      resetToken: 'hash',
+      resetTokenExpiration: Date.now(),
+      name: '',
+      address: '',
+      phoneNumber: 00,
+      city: '',
     });
     await newUser.save();
 
@@ -191,7 +195,7 @@ const updateUser = async (req, res) => {
         .status(400)
         .json({ error: 'El nombre debe tener entre 2 y 50 caracteres' });
     }
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       id,
       { name, address, phoneNumber, city },
       { new: true }

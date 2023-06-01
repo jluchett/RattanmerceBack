@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   resetToken: { type: String },
   resetTokenExpiration: { type: Date },
+  name: { type: String },
+  address: { type: String },
+  phoneNumber: { type: Number },
+  city: { type: String },
 });
 
 const User = mongoose.model('User', userSchema);

@@ -8,13 +8,14 @@ router.post('/login', userController.login);
 router.post('/forgotPass', userController.forgotPassword);
 router.post('/resetPass/:token', userController.resetPassword);
 router.get('/', userController.getUsers);
-router.delete('/user/:id', userController.deleteUser);
 
 // Rutas protegidas
 router.get('/user', authenticateToken, (req, res) => {
     // Acceso permitido solo a usuarios autenticados
     // Puedes acceder a los datos del usuario en req.user
     res.json({ user: req.user });
-  });
+});
+router.delete('/user/:id', userController.deleteUser);
+router.put('/user/update/:id',userController.updateUser )
 
 module.exports = router;

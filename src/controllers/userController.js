@@ -17,7 +17,7 @@ const register = async (req, res) => {
 
     // Crear un nuevo usuario
     const hashedPassword = await bcrypt.hash(password, 10);
-    const hashedAnswer = await bcrypt.hash(answer,5);
+    const hashedAnswer = await bcrypt.hash(answer, 5);
     const newUser = new User({
       email,
       password: hashedPassword,
@@ -85,26 +85,30 @@ const forgotPassword = async (req, res) => {
         pass: process.env.CONTRA,
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+      },
     });
-    const resetUrl = "http://localhost:3001/users/forgotPass"
+    const resetUrl = 'http://localhost:3001/users/forgotPass';
     const mailOptions = {
       from: process.env.REMITE,
       to: user.email,
       subject: 'Restablecimiento de contraseña',
-      text: `Hola ${user.email.split('@')[0]},\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
+      text: `Hola ${
+        user.email.split('@')[0]
+      },\n\nPara restablecer tu contraseña, haz clic en el siguiente enlace:\n\n${resetUrl}`,
     };
-    
+
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error al enviar el correo electrónico:', error);
       } else {
         console.log('Correo electrónico enviado:', info.response);
-        res.json({ message: 'Se ha enviado un enlace al correo electrónico para restablecer la contraseña' });
+        res.json({
+          message:
+            'Se ha enviado un enlace al correo electrónico para restablecer la contraseña',
+        });
       }
     });
-
   } catch (error) {
     console.error(
       'Error al solicitar el restablecimiento de contraseña:',
@@ -128,12 +132,15 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'El enlace para restablecer la contraseña es inválido o ha expirado' });
+      return res.status(400).json({
+        message:
+          'El enlace para restablecer la contraseña es inválido o ha expirado',
+      });
     }
 
     // Actualiza la contraseña del usuario
     user.password = newPassword;
-    user.resetToken = "hash";
+    user.resetToken = 'hash';
     user.resetTokenExpiration = null;
     await user.save();
 
@@ -167,6 +174,40 @@ const getUsers = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, address, phoneNumber, city } = req.body;
+
+    if (!name || !address || !phoneNumber || !city) {
+      return res
+        .status(400)
+        .json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    // Verifica el formato y la longitud de los campos
+    if (name.length < 2 || name.length > 50) {
+      return res
+        .status(400)
+        .json({ error: 'El nombre debe tener entre 2 y 50 caracteres' });
+    }
+    const user = User.findByIdAndUpdate(
+      id,
+      { name, address, phoneNumber, city },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error al actualizar la informacion del usuario', error);
+    res
+      .status(500)
+      .json({ message: 'Error al actualizar la informacion del usuario' });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -174,4 +215,5 @@ module.exports = {
   resetPassword,
   deleteUser,
   getUsers,
+  updateUser,
 };

@@ -92,7 +92,7 @@ const forgotPassword = async (req, res) => {
         rejectUnauthorized: false,
       },
     });
-    const resetUrl = 'http://localhost:3001/users/forgotPass';
+    const resetUrl = `http://localhost:3001/users/resetPass/${resetToken}`;
     const mailOptions = {
       from: process.env.REMITE,
       to: user.email,
@@ -126,14 +126,19 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { token } = req.params;
+    const { resetToken } = req.params;
     const { newPassword } = req.body;
-
+    if (!newPassword) {
+      return res.status(400).json({ error: 'Digite la nueva contraseña' });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
     // Busca el usuario por el token de restablecimiento de contraseña
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiration: { $gt: Date.now() },
-    });
+    const user = await User.findOneAndUpdate(
+      { resetToken: resetToken, resetTokenExpiration: { $gt: Date.now() } },
+       // Actualiza la contraseña del usuario
+      { password: passwordHash },
+      { new: true }
+    );
 
     if (!user) {
       return res.status(400).json({
@@ -141,12 +146,6 @@ const resetPassword = async (req, res) => {
           'El enlace para restablecer la contraseña es inválido o ha expirado',
       });
     }
-
-    // Actualiza la contraseña del usuario
-    user.password = newPassword;
-    user.resetToken = 'hash';
-    user.resetTokenExpiration = null;
-    await user.save();
 
     res.json({ message: 'Contraseña restablecida correctamente' });
   } catch (error) {

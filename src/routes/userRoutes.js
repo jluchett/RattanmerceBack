@@ -6,7 +6,7 @@ const authenticateToken = require('../auth/authentication')
 router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/forgotPass', userController.forgotPassword);
-router.post('/resetPass/:token', userController.resetPassword);
+router.put('/resetPass/:resetToken', userController.resetPassword);
 router.get('/', userController.getUsers);
 
 // Rutas protegidas

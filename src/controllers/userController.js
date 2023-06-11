@@ -25,7 +25,7 @@ const register = async (req, res) => {
       resetTokenExpiration: Date.now(),
       name: '',
       address: '',
-      phoneNumber: 00,
+      phoneNumber: 0,
       city: '',
     });
     await newUser.save();
@@ -36,8 +36,20 @@ const register = async (req, res) => {
     res.status(500).json({ message: 'Error al registrar el usuario' });
   }
 };
-
 const login = async (req, res) => {
+  try {
+    const { email } = req.query;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no registrado' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    res.status(500).json({ message: 'Error al iniciar sesión' });
+  }
+};
+const singin = async (req, res) => {
   // Lógica para iniciar sesión de un usuario
   try {
     const { email, password } = req.body;
@@ -45,7 +57,7 @@ const login = async (req, res) => {
     // Verificar si el usuario existe
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Credenciales inválidas' });
+      return res.status(401).json({ message: 'Credenciales no coinciden' });
     }
 
     // Verificar la contraseña
@@ -135,7 +147,7 @@ const resetPassword = async (req, res) => {
     // Busca el usuario por el token de restablecimiento de contraseña
     const user = await User.findOneAndUpdate(
       { resetToken: resetToken, resetTokenExpiration: { $gt: Date.now() } },
-       // Actualiza la contraseña del usuario
+      // Actualiza la contraseña del usuario
       { password: passwordHash },
       { new: true }
     );
@@ -214,6 +226,7 @@ const updateUser = async (req, res) => {
 module.exports = {
   register,
   login,
+  singin,
   forgotPassword,
   resetPassword,
   deleteUser,

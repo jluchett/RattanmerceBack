@@ -3,8 +3,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authenticateToken = require('../auth/authentication')
 
+router.get('/login',userController.login)
 router.post('/register', userController.register);
-router.post('/login', userController.login);
+router.post('/singin', userController.singin);
 router.post('/forgotPass', userController.forgotPassword);
 router.put('/resetPass/:resetToken', userController.resetPassword);
 router.get('/', userController.getUsers);

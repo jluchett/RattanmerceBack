@@ -41,9 +41,15 @@ const login = async (req, res) => {
     const { email } = req.query;
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Usuario no registrado' });
+      return res.status(400).json({
+        success: false,
+        message: 'Email no está registrado',
+      });
     }
-    res.status(200).json(user);
+    return res.json({
+      success: true,
+      usuario: user,
+    });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     res.status(500).json({ message: 'Error al iniciar sesión' });

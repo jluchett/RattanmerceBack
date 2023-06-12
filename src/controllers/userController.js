@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const { now } = require('mongoose');
 
 const register = async (req, res) => {
   // Lógica para registrar un usuario
@@ -13,7 +12,10 @@ const register = async (req, res) => {
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: 'El usuario ya existe' });
+      return res.status(409).json({
+        success: false,
+        message: 'El email ya está registrado',
+      });
     }
 
     // Crear un nuevo usuario
@@ -29,8 +31,10 @@ const register = async (req, res) => {
       city: '',
     });
     await newUser.save();
-
-    res.status(201).json({ message: 'Usuario registrado exitosamente' });
+    return res.status(201).json({
+      success: true,
+      message: 'Usuario registrado exitosamente',
+    });
   } catch (error) {
     console.error('Error al registrar el usuario:', error);
     res.status(500).json({ message: 'Error al registrar el usuario' });

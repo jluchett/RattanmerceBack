@@ -67,22 +67,26 @@ const singin = async (req, res) => {
     // Verificar si el usuario existe
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Credenciales no coinciden' });
+      return res.status(401).json({ message: 'Credenciales no coinciden', success: false });
     }
 
     // Verificar la contraseña
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Credenciales no coinciden' });
+      return res.status(401).json({ message: 'Credenciales no coinciden', success: false });
     }
 
     // Generar token JWT
     const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET);
 
-    res.status(200).json({ token });
+    res.status(200).json({ 
+      token,
+      message:"Sesion iniciada correctamente",
+      success: true
+    });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
-    res.status(500).json({ message: 'Error al iniciar sesión' });
+    res.status(500).json({ message: 'Error al iniciar sesión..' });
   }
 };
 
